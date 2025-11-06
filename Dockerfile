@@ -1,10 +1,18 @@
 # builds our image using dotnet's sdk
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /source
 COPY . ./webapp/
 WORKDIR /source/webapp
 
 EXPOSE 80
+
+RUN dotnet restore
+RUN dotnet publish -c release -o /app --no-restore
+
+# runs it using aspnet runtime
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
+WORKDIR /app
+COPY --from=build /app ./
 
 #Datadog
 RUN apt-get update && apt-get install -y wget curl tar jq && \
@@ -14,7 +22,7 @@ RUN apt-get update && apt-get install -y wget curl tar jq && \
     wget -O /tmp/datadog-dotnet-apm.tar.gz "https://github.com/DataDog/dd-trace-dotnet/releases/download/${LATEST}/datadog-dotnet-apm-${LATEST#v}.tar.gz" && \
     mkdir -p /opt/datadog && \
     tar -xzf /tmp/datadog-dotnet-apm.tar.gz -C /opt/datadog && \
-    rm /tmp/datadog-dotnet-apm.tar.gz && \
+    rm /tmp/datadog-dotnet-apm.tar.gz
     
 
 # Variables de entorno Datadog
@@ -25,13 +33,7 @@ ENV CORECLR_ENABLE_PROFILING=1 \
     DD_ENV=lab \
     DD_VERSION=1.0 \
     DD_LOGS_INJECTION=true \
-    DD_RUNTIME_METRICS_ENABLED=true
+    DD_RUNTIME_METRICS_ENABLED=true \
+    DD_SERVICE=dotnet-webapp
 
-RUN dotnet restore
-RUN dotnet publish -c release -o /app --no-restore
-
-# runs it using aspnet runtime
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
-WORKDIR /app
-COPY --from=build /app ./
 ENTRYPOINT ["dotnet", "webapp.dll"]
