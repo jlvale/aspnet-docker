@@ -31,7 +31,7 @@ RUN dotnet restore
 RUN dotnet publish -c release -o /app --no-restore
 
 # runs it using aspnet runtime
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 COPY --from=build /app ./
 ENTRYPOINT ["dotnet", "webapp.dll"]
