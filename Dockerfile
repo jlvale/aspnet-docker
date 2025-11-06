@@ -1,5 +1,5 @@
 # builds our image using dotnet's sdk
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /source
 COPY . ./webapp/
 WORKDIR /source/webapp
